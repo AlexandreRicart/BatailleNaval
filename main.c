@@ -8,13 +8,16 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+//#include <exemple.h>
 #define TABMAX 10
-#define x 10
-#define y 10
+#define SIZE_X 10
+#define SIZE_Y 10
 
-int TableauNaval[x][y];
+int TableauNaval[SIZE_X][SIZE_Y];
+int TableauCoups[SIZE_X][SIZE_Y];
 
-int Menu(){
+int Menu()
+{
     int choix;
 
     printf("\nProjet Bataille Naval AKA <<FAKE AZUR LANE !>>\n\n");
@@ -27,52 +30,83 @@ int Menu(){
     printf("3) Exit.\n");
     scanf("%d", &choix);
 
-return choix;
+    return choix;
 }
 
-int Reglement(){
-    int o;
+int Reglement()
+{
 
-    printf("");
+    printf("Nani");
 
-
+    return 0;
 }
 
-void CarteNaval(){
+int DeclarerAttaque()
+{
 
+    /*Navires d‚clar‚s */
+    TableauNaval[4][4] = 1;
+    TableauNaval[4][4] = 1;
+    TableauNaval[4][4] = 1;
+    TableauNaval[4][4] = 1;
+
+
+    int x, y;
+    printf("Placer un ‚l‚ment dans le tableau:\n");
+    printf("Axe X:");
+    scanf("%d",&x);
+    printf("Axe Y:");
+    scanf("%d",&y);
+
+    if(TableauNaval[x-1][y-1] == 1)
+    {
+        TableauCoups[x-1][y-1] = 1;
+    }
+    else
+    {
+        TableauCoups[x-1][y-1] = 2;
+    }
+
+    return TableauCoups[x-1][y-1];
+}
+
+void CarteNaval()
+{
     printf("  ");
-    for(int k = 0; k < TABMAX; k++){
+    for(int k = 0; k < TABMAX; k++)
+    {
         printf(" %d",k + 1);
     }
     printf("\n");
-    for(int i = 0; i < TABMAX; i++){
-    printf("%2d ",i + 1);
-        for(int j = 0; j < TABMAX; j++){
-           printf("%c ", 176);
+    for(int i = 0; i < TABMAX; i++)
+    {
+        printf("%2d ",i + 1);
+        for(int j = 0; j < TABMAX; j++)
+        {
+            switch(TableauCoups[i][j])
+            {
+            case 1:
+                printf("X ");
+                break;
+            case 2:
+                printf("O ");
+                break;
+            default :
+                printf("%c ", 176);
+                break;
+            }
+            printf("\n");
         }
-        printf("\n");
     }
 }
 
 int main()
 {
-   int x, y;
-   int TableauGrille[][];
 
-   printf("Choisir le placement d un bateau 1 cases.\n");
-   scanf("%d %d", x, y);
 
-    printf("  ");
-    for(int k = 0; k < TABMAX; k++){
-        printf(" %d",k + 1);
-    }
-    printf("\n");
-    for(int i = 0; i < TABMAX; i++){
-    printf("%2d ",i + 1);
-        for(int j = 0; j < TABMAX; j++){
-           T
-        }
-        printf("\n");
-    }
 
+
+    CarteNaval();
+
+    system("Pause");
 }
