@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1575976606 source:p:\dossier_cours\trim2\ma-20 application c\bataillenaval_ricart\main.c
+	<stdio.h>
+	<stdlib.h>
+
