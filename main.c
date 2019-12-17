@@ -46,9 +46,9 @@ int DeclarerAttaque()
 
     /*Navires d‚clar‚s */
     TableauNaval[4][4] = 1;
-    TableauNaval[4][4] = 1;
-    TableauNaval[4][4] = 1;
-    TableauNaval[4][4] = 1;
+    TableauNaval[3][4] = 1;
+    TableauNaval[2][4] = 1;
+    TableauNaval[1][4] = 1;
 
 
     int x, y;
