@@ -1,58 +1,42 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 /*
 * \Title :  BATAILLE NAVAL VERSION
 * \Type:    Jeux de la bataille naval vs IA
 * \author:  Alexandre Ricart
-* \version: 1.0
-* \date:    07.01.2020
+* \version: 1.0 (final)
+* \date:    23.01.2020
 */
-
 
 //Valeur maximum a saisir dans le tableau
 #define AXEMAX_X 10
 #define AXEMAX_Y 10
 //Valeur minimum a saisir dans le tableau
 #define MIN 1
+//Chemin par defaut
+#define PATH_GRILLE "fichiers_jeux\\grilles\\GRILLES"
+#define PATH_SCORES "fichiers_jeux\\resultats\\RES.txt"
+#define PATH_LOGS "fichiers_jeux\\resumes\\LOGS.txt"
+//Nbre de grille
+#define NBR_GRILLES 4
+//Nbre de caractŠre maximum pour le pseudo
+#define CHARMAX 10
+//Nbre de score max a enregistrer
+#define SCOREMAX 5
 
-/*Pour plus tard ... transformer les B...
-Le programmes comporte 5 bateaux dans les 2 camps
-4 B = Porte-avion 1x
-3 B = croiseur 2x
-2 B = torpieur 2x
------------------------------------------*/
+//Calcul les points + total
+int total = 0;
+//CDW = Condition de victoire
+int cdw = 0;
 
-/*Grille de tableau pour joeur de 10/10 */
-char GrilleJ[AXEMAX_X][AXEMAX_Y]=
-{
-    {'W','B','B','B','W','W','W','B','W','W'},
-    {'W','W','W','W','W','W','W','B','W','W'},
-    {'W','W','W','W','W','W','W','B','W','W'},
-    {'W','B','B','W','W','W','W','B','W','W'},
-    {'W','W','W','W','W','W','W','W','W','W'},
-    {'W','W','W','W','B','B','B','W','W','W'},
-    {'W','W','W','W','W','W','W','W','W','W'},
-    {'W','W','W','W','W','W','W','W','W','W'},
-    {'W','B','W','W','W','W','W','W','W','W'},
-    {'W','B','W','W','W','W','W','W','W','W'}
-};
-/*Grille de tableau pour le NPC de 10/10 */
-char GrilleNPC[AXEMAX_X][AXEMAX_Y]=
-{
-    {'W','W','W','W','W','W','W','B','B','W'},
-    {'W','W','W','W','W','W','W','W','W','W'},
-    {'W','B','W','W','W','W','W','W','W','W'},
-    {'W','B','W','W','W','B','W','W','W','W'},
-    {'W','B','W','W','W','B','W','W','W','W'},
-    {'W','W','W','W','W','W','W','W','W','W'},
-    {'W','W','W','W','W','W','W','W','W','W'},
-    {'W','W','W','B','B','B','B','W','W','W'},
-    {'W','W','W','W','W','W','W','W','W','W'},
-    {'W','B','B','B','W','W','W','W','W','W'}
-};
-/*Grille de tableau … l'affichage 10/10 */
-char Historique[AXEMAX_X][AXEMAX_Y]=
+char grilleJ[AXEMAX_X][AXEMAX_Y];
+
+char grilleNPC[AXEMAX_X][AXEMAX_Y];
+
+//Grille de tableau a l'affichage 10/10
+char historique[AXEMAX_X][AXEMAX_Y]=
 {
     {' ',' ',' ',' ',' ',' ',' ',' ',' ',' '},
     {' ',' ',' ',' ',' ',' ',' ',' ',' ',' '},
@@ -74,7 +58,7 @@ void Grille()
 {
     int h,i,j;
 
-    //Sert afficher un tableau compr‚hensible pour le joeur
+    //Sert afficher un tableau comprehensible pour le joeur
     printf("\n");
     printf("  X\n");
     printf("Y :");
@@ -89,7 +73,7 @@ void Grille()
         for(j = 0; j < AXEMAX_X; ++j)
         {
             //Affiche la grille historique aux positions de i et de j.
-            printf("[%c]",Historique[i][j]);
+            printf("[%c]",historique[i][j]);
         }
         printf("\n");
 
@@ -104,7 +88,7 @@ void Solution()
 {
     int h,i,j;
 
-    //Sert afficher un tableau compr‚hensible pour le joeur
+    //Sert afficher un tableau comprehensible pour le joeur
     printf("\n");
     printf("  X\n");
     printf("Y :");
@@ -115,45 +99,48 @@ void Solution()
     printf("\n");
     for(i = 0; i < AXEMAX_X; ++i)
     {
-        printf(" %2d ",i + 1);//Trouve une valeur random de 0 … 9
+        printf(" %2d ",i + 1);//Trouve une valeur random de 0 GÇª 9
         for(j = 0; j < AXEMAX_X; ++j)
         {
             //Affiche la grille de l'IA aux positions de i et de j.
-            printf("[%c]",GrilleNPC[i][j]);
+            printf("[%c]",grilleNPC[i][j]);
         }
         printf("\n");
     }
-     printf("\n");
+    printf("\n");
 }
 
 /**
     Tir
-    @param Selon le tour du joueur, affiche si ce dernier a toucher ou louper un bateau, modifie la valeur de B (pour bateau) en S (pour sombr‚ ou coul‚) dans la grille de l'adversaire et permet de rejouer.
+    @param Selon le tour du joueur, affiche si ce dernier a toucher ou louper un bateau, modifie la valeur de B (pour bateau) en S (pour sombree ou coulee) dans la grille de l'adversaire et permet de rejouer.
 */
-int Tir(int Tour,int X,int Y)
+int Tir(int Tour,int X,int Y, char nomjoueur[CHARMAX])
 {
-
     //Tout les tours pairs, le joueur joue
     if(Tour % 2 == 0)
     {
+        //ecrire dans le fichier
+        Enregistrements_partie(Tour,X,Y, nomjoueur);
         //Selon la grille de l'IA
-        switch(GrilleNPC[X][Y])
+        switch(grilleNPC[X][Y])
         {
         case 'W':
-            Historique[X][Y] = 'O';
-            printf("Louper pour le joueur\n");
+            historique[X][Y] = 'O';
+            printf("Louper pour %s\n", nomjoueur);
             //Ne peux pas rejouer
             return 0;
         case 'S':
-            printf("Deja touche par le joueur\n");
+            printf("Deja touche par %s\n", nomjoueur);
             //Ne peux pas rejouer
             return 0;
-        case 'B':
-            printf("Touche pour le joueur\n");
+        case 'T':
+        case 'A':
+        case 'C':
+            printf("Touche pour %s\n", nomjoueur);
             //Modifie la valeur B en S (le bateau est touche a cette position)
-            GrilleNPC[X][Y] = 'S';
-            //Affiche un X dans la grille historique … la position X et Y
-            Historique[X][Y] = 'X';
+            grilleNPC[X][Y] = 'S';
+            //Affiche un X dans la grille historique a la position X et Y
+            historique[X][Y] = 'X';
             //permet au joueur de rejouer
             return 1;
         }
@@ -161,23 +148,245 @@ int Tir(int Tour,int X,int Y)
     //Tout les tours impairs, l'IA joue
     else if(Tour % 2 != 0)
     {
-         //Selon la grille du Joueur
-        switch(GrilleJ[X][Y])
+        Enregistrements_partie(Tour,X,Y, nomjoueur);
+        //Selon la grille du Joueur
+        switch(grilleJ[X][Y])
         {
         case 'W':
             printf("Louper pour le NPC\n");
             //Ne peux pas rejouer
             return 0;
         case 'S':
-            printf("Deja touche par l'IA\n");
+            printf("Deja touche par le NPC\n");
             //Ne peux pas rejouer
             return 0;
-        case 'B':
+        case 'T':
+        case 'A':
+        case 'C':
             printf("Touche pour le NPC\n");
             //Modifie la valeur B en S (le bateau est touche a cette position)
-            GrilleJ[X][Y] = 'S';
+            grilleJ[X][Y] = 'S';
             //permet a l'IA de rejouer
             return 1;
+        }
+    }
+}
+
+/**
+    Enregistrements_scores
+    @param Enregistre dans un fichier RES.txt (resultat) les scores des 5 dernieres parties
+*/
+void Enregistrements_scores(){
+
+
+	FILE* fichier = NULL;
+	int scoretab[SCOREMAX] = {0};
+
+    //ecrire lires les 5 derniers scores
+	fichier = fopen(PATH_SCORES, "r");
+	for(int i = 0; i < 5; i++)
+	{
+        //enregistrer les scores des parties pr‚c‚dentes
+		fscanf(fichier, "%d ", &scoretab[i]);
+		//afficher les scores des parties pr‚c‚dentes
+		printf("Les meilleurs scores sont : %d\n", scoretab[i]);
+	}
+
+	fclose(fichier);
+
+	for(int i = 5; i > 0; i--)
+	{
+	    //ecraser le derniers scores lorsque le 6Šme scores prend la place du premier.
+		scoretab[i] = scoretab[i-1];
+	}
+	scoretab[0] = total;
+
+	fichier = fopen(PATH_SCORES, "w+");
+
+	for(int i = 0; i < 5; i++)
+	{
+        //afficher le nouveau tableau des scores.
+		fprintf(fichier, "%d ",scoretab[i]);
+	}
+
+	fclose(fichier);
+
+}
+
+/**
+    Enregistrements_findepartie
+    @param Enregistre dans un fichier LOGS.txt le gagnant de la partie, il donne egalement son total de point.
+*/
+void Enregistrements_findepartie(int tour, char nomjoueur[CHARMAX],int total){
+
+    FILE* fichier = NULL;
+
+    if(tour % 2 == 0)
+    {
+        fichier = fopen(PATH_LOGS, "a+");
+        if (fichier != NULL)
+        {
+            fprintf(fichier,"Victoire de %s avec %d pts\n", nomjoueur, total);
+            fclose(fichier);
+
+        }
+    }else{
+        fichier = fopen(PATH_LOGS, "a+");
+        if (fichier != NULL)
+        {
+            fprintf(fichier,"Defaite de %s avec %d pts\n", nomjoueur, total);
+            fclose(fichier);
+        }
+    }
+}
+
+/**
+    Enregistrements_partie
+    @param Enregistre dans un fichier LOGS.txt les evenement de la bataille naval des 2 joueurs.
+*/
+void Enregistrements_partie(int tour, int X,int Y, char nomjoueur[CHARMAX])
+{
+    FILE* fichier = NULL;
+
+    if(tour % 2 == 0)
+    {
+        switch(grilleNPC[X][Y])
+        {
+        case 'W':
+            //permet a l'utilisateur de quitter l'appliquation sans faire beuger l'ajout de la phrase dans le programme.
+            //Cette methode a ete repete pour tous les cases.
+            fichier = fopen(PATH_LOGS, "a+");
+            if (fichier != NULL)
+            {
+                fprintf(fichier,"%s ordonne un tir en position %d %d, c est tombe a l eau.\n", nomjoueur, X, Y);
+                fclose(fichier);
+
+            }
+            else
+            {
+                printf("requet impossible.\n");
+            }
+            break;
+        case 'S':
+            fichier = fopen(PATH_LOGS, "a+");
+            if (fichier != NULL)
+            {
+                fprintf(fichier,"%s ordonne un tir en position %d %d, c est deja touche.\n", nomjoueur, X, Y);
+                fclose(fichier);
+            }
+            else
+            {
+                printf("requet impossible.\n");
+            }
+            break;
+        case 'T':
+            total = total + 3;
+            fichier = fopen(PATH_LOGS, "a+");
+            if (fichier != NULL)
+            {
+                fprintf(fichier,"*BOUM* %s touche un torpilleur en position %d %d, +3pts.\n", nomjoueur, X, Y);
+                fclose(fichier);
+            }
+            else
+            {
+                printf("requet impossible.\n");
+            }
+            break;
+        case 'A':
+            total = total + 1;
+            fichier = fopen(PATH_LOGS, "a+");
+            if (fichier != NULL)
+            {
+                fprintf(fichier,"*BOUM* %s touche un porte avion en position %d %d, +1pts.\n", nomjoueur, X, Y);
+                fclose(fichier);
+            }
+            else
+            {
+                printf("requet impossible.\n");
+            }
+            break;
+        case 'C':
+            total = total + 2;
+            fichier = fopen(PATH_LOGS, "a+");
+            if (fichier != NULL)
+            {
+                fprintf(fichier,"*BOUM* %s touche un croiseur en position %d %d, +2pts.\n", nomjoueur, X, Y);
+                fclose(fichier);
+            }
+            else
+            {
+                printf("requet impossible.\n");
+            }
+            break;
+        }
+    }
+    else
+    {
+        switch(grilleJ[X][Y])
+        {
+        case 'W':
+            fichier = fopen(PATH_LOGS, "a+");
+            if (fichier != NULL)
+            {
+                fprintf(fichier,"L ordinateur ordonne un tir en position %d %d, c est tombe a l eau.\n", X, Y);
+                fclose(fichier);
+            }
+            else
+            {
+                printf("requet impossible.\n");
+            }
+            break;
+        case 'S':
+            fichier = fopen(PATH_LOGS, "a+");
+            if (fichier != NULL)
+            {
+                fprintf(fichier,"L ordinateur ordonne un tir en position %d %d, c est deja touche.\n", X, Y);
+                fclose(fichier);
+            }
+            else
+            {
+                printf("requet impossible.\n");
+            }
+            break;
+        case 'T':
+            total = total - 3;
+            fichier = fopen(PATH_LOGS, "a+");
+            if (fichier != NULL)
+            {
+                fprintf(fichier,"*BOUM* L ordinateur touche un torpilleur en position %d %d, -3pts.\n", X, Y);
+                fclose(fichier);
+            }
+            else
+            {
+                printf("requet impossible.\n");
+            }
+            break;
+        case 'A':
+            total = total - 1;
+            fichier = fopen(PATH_LOGS, "a+");
+            if (fichier != NULL)
+            {
+                fprintf(fichier,"*BOUM* L ordinateur touche un porte avion en position %d %d, -1pts.\n", X, Y);
+                fclose(fichier);
+            }
+            else
+            {
+                printf("requet impossible.\n");
+            }
+            break;
+        case 'C':
+            total = total - 2;
+            fichier = fopen(PATH_LOGS, "a+");
+            if (fichier != NULL)
+            {
+                fprintf(fichier,"*BOUM* L ordinateur touche un croiseur en position %d %d, -2pts.\n", X, Y);
+                fclose(fichier);
+            }
+            else
+            {
+                printf("requet impossible.\n");
+            }
+            break;
         }
     }
 }
@@ -199,7 +408,7 @@ int Condition_Victoire(int Tour)
             for(j = 0; j < AXEMAX_X; ++j)
             {
                 //Selon la grille NPC, s'il reste encore un bateau retourne 0, la partie continue.
-                if( GrilleNPC[i][j] == 'B')
+                if( grilleNPC[i][j] == 'T' || grilleNPC[i][j] == 'A' || grilleNPC[i][j] == 'C')
                 {
                     return 0;
                 }
@@ -215,7 +424,7 @@ int Condition_Victoire(int Tour)
             for(j = 0; j < AXEMAX_X; ++j)
             {
                 //Selon la grille du Joueur, s'il reste encore un bateau retourne 0, la partie continue.
-                if( GrilleJ[i][j] == 'B')
+                if( grilleJ[i][j] == 'T' || grilleJ[i][j] == 'A' || grilleJ[i][j] == 'C')
                 {
                     return 0;
                 }
@@ -228,33 +437,32 @@ int Condition_Victoire(int Tour)
 
 /**
     Validation
-    @param Valide si les donn‚es sont bien inf‚rieur … la taille maximum et sup‚rieur … la taille minimum du tableau, sinon demande de ressaisir la donn‚e
+    @param Valide si les donnees sont bien inferieur a la taille maximum et superieur a la taille minimum du tableau, sinon demande de ressaisir la donnee
 */
 int Validation()
 {
-    int Val;
-    //Tant que la valeur est inf‚rieur … la valeur minimum ou sup‚rieur … la valeur maxium, affiche un message d'erreur
+    int val;
+    //Tant que la valeur est inferieur GÇª la valeur minimum ou superieur a la valeur maxium, affiche un message d'erreur
     do
     {
         //Vider la memoire cach et saisir une nouvelle valeur
         fflush(stdin);
-        scanf("%d",&Val);
+        scanf("%d",&val);
 
     }
-    while((Val < MIN || Val >AXEMAX_X) && printf("Erreur, la valeur doit etre entre 1 et 10\nFaite aussi attention au caractŠres qui ne sont pas pris par le systeme.\n"));
+    while((val < MIN || val >AXEMAX_X) && printf("Erreur, la valeur doit etre entre 1 et 10\nFaite aussi attention au caracteres qui ne sont pas pris par le systeme.\n"));
 
     //Val N - 1, donc Val - 1 afin de saisir des valeurs entre 1 et 10.
-    return Val - 1;
+    return val - 1;
 }
 
 /**
     Menu
-    @param Affiche le menu du d‚but de jeu, et demande le choix du joueur
+    @param Affiche le menu du debut de jeu, et demande le choix du joueur
 */
 int Menu()
 {
-
-    int Valeur;
+    int valeur;
 
     printf("Bienvenu dans la bataille navale:\n");
     printf("Menu:\n");
@@ -263,33 +471,33 @@ int Menu()
     printf("2 - Les_Regles\n");
     printf("3 - Quitter\n");
     printf("\n");
-    scanf("%d",&Valeur);
+    scanf("%d",&valeur);
 
-    return Valeur;
+    return valeur;
 }
 
 /**
     Error
-    @param Empˆche le programme de tourne en boucle si l'utilisateur ne rentre pas les donn‚es correctes, redemande … l'utilisateur de saisir une donn‚e s'il s'est tromp‚.
+    @param Empeche le programme de tourne en boucle si l'utilisateur ne rentre pas les donnees correctes, redemande a l'utilisateur de saisir une donnee s'il s'est trompee.
 */
 int Error()
 {
 
-    int Val;
+    int val;
 
     //Effacer l'ancien message.
     system("CLS");
     printf("Error - Veuillez choisir entre 1 et 3 svp \n");
     //Vider la memoire cach et saisir une nouvelle valeur
     fflush(stdin);
-    scanf("%d", &Val);
+    scanf("%d", &val);
 
-    return Val;
+    return val;
 }
 
 /**
     Regles
-    @param Affiche les r‚gles du jeu.
+    @param Affiche les regles du jeu.
 */
 void Regles()
 {
@@ -301,117 +509,247 @@ void Regles()
     printf("\n\nA l'affichage:\n");
     printf("- O: signifie que vous avez loupe\n");
     printf("- X: signifie que vous avez touche\n");
-    printf("- Suite … vos tirs et de ceux de l'IA un commentaire indiquera si un bateau est touch‚ ou non.\n  Si quelqu'un touche, il a la possibilite de rejouer.\n");
+    printf("- Suite a vos tirs et de ceux de l'IA un commentaire indiquera si un bateau est touche ou non.\n  Si quelqu'un touche, il a la possibilite de rejouer.\n");
     printf("\n");
     printf("Bonne chance! :D\n");
     printf("\n");
     printf("**************************************\n");
 }
 
+/**
+    RecuperationGrille
+    @param lire le contenu d'un fichier GRILLE.txt
+*/
+void RecuperationGrille(char *path, char grille[AXEMAX_X][AXEMAX_Y])
+{
+
+    FILE* fichier = NULL;
+
+    //lire le fichier s'il existe
+    fichier = fopen(path, "r");
+    if (fichier != NULL)
+    {
+        char caractere;
+        int i = 0;
+        int j = 0;
+
+        //Tant qu'il n'y arrive pas à la fin du fichier
+        while(caractere != EOF)    // EOF = End Of File
+        {
+            //lire caractere par caractere
+            caractere = fgetc(fichier);
+            switch(caractere)
+            {
+            case 'T':
+            case 'A':
+            case 'C':
+            case 'W':
+                grille[i][j] = caractere;
+                if(j == AXEMAX_Y-1)
+                {
+                    i += 1;
+                    j = 0;
+                }
+                else
+                {
+                    j += 1;
+                }
+                break;
+            default:
+                break;
+            }
+        }
+        fclose(fichier);
+    }
+    else
+    {
+        printf("Impossible d'ouvrir le fichier contenant la grille.");
+    }
+}
+
+/**
+    GrilleAttribue
+    @param Va inscrire le contenu d'une grille random (entre les 4 grilles possibles), 1 pour le joueur et 1 pour le NPC
+*/
+void GrilleAttribue(char pseudo[CHARMAX])
+{
+
+    int randomJ = 0;
+    int randomNPC = 0;
+    int taille = strlen(PATH_GRILLE) + 10;
+    char path[taille];
+
+    //Choisir une GRILLE aleatoire
+    randomJ = rand() % NBR_GRILLES + 1;
+    randomNPC = rand() % NBR_GRILLES + 1;
+
+    //Lire les donnees Ã  mettre dans la grille du joueur
+    printf("Grille de jeu attribuee a %s:", pseudo);
+    snprintf(path,taille,"%s%d%s",PATH_GRILLE,randomJ,".txt");
+    printf("\n%s", path);
+    RecuperationGrille(path, grilleJ);
+    printf("\n");
+    //Lire les donnees Ã  mettre dans la grille du NPC
+    printf("Grille de jeu attribuee au NPC:");
+    snprintf(path,taille,"%s%d%s",PATH_GRILLE,randomNPC,".txt");
+    printf("\n%s", path);
+    RecuperationGrille(path, grilleNPC);
+}
+
+/**
+    NomJoueur
+    @param va lire caractere par caractere et inscrire dans un tableau pseudo le nom du joueur
+*/
+void NomJoueur(char *pseudo)
+{
+    char validation = 'n';
+
+    printf("Bonjour, comment vous nommez-vous ?\nATTENTION 10 CARACTERES MAX!\n");
+
+    while(validation != 'y')
+    {
+        printf("Entrez votre nom: \n");
+        scanf("%s", pseudo);
+        printf("Vous vous nommez %s ? (y pour oui, n pour non) ", pseudo);
+        fflush(stdin);
+        scanf("%c", &validation);
+        //tant que la reponse est differente de 'n' ou 'y', affiche un message d erreur
+        if(validation != 'n' && validation != 'y')
+        {
+            system("CLS");
+            fflush(stdin);
+            printf("Erreur, veuillez respecter la demande precedente!\n taper y pour oui ou n pour non!");
+        }
+    }
+
+    system("CLS");
+}
+
 int main()
 {
-    int Tour = 0;
-    int Touche;
-    //CDW = Condition de victoire
-    int CDW = 0;
+    int tour = 0;
+    int touche;
     int validation;
-    int X = 0;
-    int Y = 0;
-    int Choix;
-    int Choix2;
+    int x = 0;
+    int y = 0;
+    int choix;
+    int choix2;
     //Triche = affiche la grille du NPC
-    char Triche;
+    char triche;
     //initialiser un temps t
     time_t t;
+
+    FILE* fichier = NULL;
 
     //Initialiser le NPC ou L'IA selon l'heure du temps
     srand((unsigned) time(&t));
 
-    Choix = Menu();
+    char pseudo[CHARMAX];
 
-    while(Choix != 3)
+    choix = Menu();
+    system("CLS");
+
+    while(choix != 3)
     {
-        switch(Choix)
+        switch(choix)
         {
         case 1:
-            printf("Debut de jeu:\n");
-            while( CDW != 1)
+
+            //vider le fichier LOGS de la partie precedente avant le debut de la nouvelle partie
+            fichier = fopen(PATH_LOGS, "w+");
+            fclose(fichier);
+
+            //Initialiser au debut du jeu la grille du NPC et celui du joueur
+            NomJoueur(&pseudo);
+            GrilleAttribue(pseudo);
+
+            while(cdw != 1)
             {
-                if(Tour % 2 == 0)
+                if(tour % 2 == 0)
                 {
+                    printf("\n");
                     //Tour du joueur
                     Grille();
                     printf("\nTir_X : ");
-                    X = Validation();
+                    x = Validation();
                     printf("Tir_Y : ");
-                    Y = Validation();
+                    y = Validation();
                     printf("\n");
-                    Touche = Tir(Tour,X,Y);
-                    CDW = Condition_Victoire(Tour);
+                    touche = Tir(tour,x,y,pseudo);
+                    cdw = Condition_Victoire(tour);
                     //retourn 1 s'il a 1 gagnant
-                    if(CDW == 1)
+                    if(cdw == 1)
                     {
-                        printf("\nGagne");
+                        printf("\nGagne !!!\n\n");
+                        Enregistrements_findepartie(tour, pseudo,total);
                     }
                     //retourn 1 s'il a touche
-                    if (Touche == 1)
+                    if (touche == 1)
                     {
-                        --Tour;
-                    } else {
+                        --tour;
+                    }
+                    else
+                    {
                         printf("\nVoulez voir la solution ? (Appuyez sur y pour oui ou toucher une touche pour continuer)\n");
                         printf("Reponse: ");
                         //Vider la memoire cach et saisir une nouvelle valeur
                         fflush(stdin);
-                        scanf("%c", &Triche);
-                        if(Triche == 'y')
+                        scanf("%c", &triche);
+                        if(triche == 'y')
                         {
-                            printf("B = Bateau\n");
+                            printf("T = Torpieurs\n");
+                            printf("C = Croiseurs\n");
+                            printf("A = Portes-avions\n");
                             printf("S = Touche\n");
                             printf("W = eau\n");
                             Solution();
                         }
                     }
                 }
-                else if(Tour % 2 != 0)
+                else if(tour % 2 != 0)
                 {
                     //Tour du NPC
-                    //Trouve une valeur random de 1 … 10
-                    X = rand() % AXEMAX_X;
-                    //Trouve une valeur random de 1 … 10
-                    Y = rand() % AXEMAX_Y;
-                    Touche = Tir(Tour,X,Y);
-                    CDW = Condition_Victoire(Tour);
+                    //Trouve une valeur random de 1 a 10
+                    x = rand() % AXEMAX_X;
+                    //Trouve une valeur random de 1 a 10
+                    y = rand() % AXEMAX_Y;
+                    touche = Tir(tour,x,y,pseudo);
+                    cdw = Condition_Victoire(tour);
                     //retourn 1 s'il a 1 gagnant
-                    if(CDW == 1)
+                    if(cdw == 1)
                     {
                         //retourn 1 s'il a 1 gagnant, donc affiche perdu (pour le joueur)
-                        printf("\nPerdu");
+                        printf("\nPerdu !!!\n\n");
+                        Enregistrements_findepartie(tour, pseudo, total);
                     }
                     //retourn 1 s'il a touche
-                    if (Touche == 1)
+                    if (touche == 1)
                     {
-                        --Tour;
+                        --tour;
                     }
                 }
-                ++Tour;
+                ++tour;
             }
+			Enregistrements_scores();
+
             printf("rejouer ?\n (Appuyer sur 3 pour quitter ou 1 pour rejouer)\n");
-            scanf("%d", &Choix2);
-            while(Choix2 != 3 && Choix2 != 1)
+            scanf("%d", &choix2);
+            while(choix2 != 3 && choix2 != 1)
             {
-                Choix2 = Error();
+                choix2 = Error();
             }
-            Choix = Choix2;
+            choix = choix2;
+
             break;
         case 2:
             Regles();
             printf("\nJouer ?\n (1 = oui / 3 = quitter)\n");
-            scanf("%d", &Choix2);
-            while(Choix2 != 1 && Choix2 != 3)
+            scanf("%d", &choix2);
+            while(choix2 != 1 && choix2 != 3)
             {
-                Choix2 = Error();
+                choix2 = Error();
             }
-            Choix = Choix2;
+            choix = choix2;
             break;
 
         default:
@@ -419,7 +757,7 @@ int main()
             fflush(stdin);
             //Effacer l'ancien message.
             system("CLS");
-            Choix = Menu();
+            choix = Menu();
             break;
         }
     }

@@ -1,0 +1,11 @@
+# depslib dependency file v1.0
+1579718204 source:c:\users\alexa\desktop\naval\main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
+1579765247 source:c:\users\alexandre.ricart\desktop\naval\main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
